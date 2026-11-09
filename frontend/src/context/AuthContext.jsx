@@ -5,29 +5,36 @@ const AuthContext = createContext(null);
 const USER_STORAGE_KEY = 'autolearn_auth_user';
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem(USER_STORAGE_KEY);
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState(null);
 
-  // Synchronize session on mount with MongoDB backend
+  // On project open (or when on "/"), always start logged out on the sign-in page
   useEffect(() => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch {}
+
+    const isEntryPage = window.location.pathname === '/' || window.location.pathname === '/login' || window.location.pathname === '/signup';
+    if (isEntryPage) {
+      setUser(null);
+      setLoading(false);
+      apiFetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+      return;
+    }
+
     let isMounted = true;
     async function checkAuth() {
       try {
         const res = await apiFetch('/api/auth/me');
         if (isMounted && res && res.ok && res.user) {
           setUser(res.user);
-          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(res.user));
+        } else {
+          setUser(null);
         }
-      } catch (err) {
-        // Not logged in or session expired
+      } catch {
+        if (isMounted) setUser(null);
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -48,7 +55,6 @@ export function AuthProvider({ children }) {
       });
       if (res && res.ok && res.user) {
         setUser(res.user);
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(res.user));
         return { success: true, user: res.user, message: res.message };
       }
       throw new Error(res?.error || 'Registration failed.');
@@ -69,7 +75,6 @@ export function AuthProvider({ children }) {
       });
       if (res && res.ok && res.user) {
         setUser(res.user);
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(res.user));
         return { success: true, user: res.user, message: res.message };
       }
       throw new Error(res?.error || 'Login failed.');
@@ -87,7 +92,12 @@ export function AuthProvider({ children }) {
       // Ignore network errors on logout
     }
     setUser(null);
-    localStorage.removeItem(USER_STORAGE_KEY);
+    try {
+      localStorage.removeItem(USER_STORAGE_KEY);
+      sessionStorage.removeItem(USER_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
   };
 
   return (

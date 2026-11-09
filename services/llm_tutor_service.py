@@ -228,14 +228,15 @@ def _call_gemini(api_key: str, question: str, history: Optional[List[Dict]] = No
         "Structure your response with clear Markdown headers (###), bullet points, bold key terms, mathematical formulas where appropriate, and clean Python code snippets with comments."
     )
     
-    preferred_model = os.getenv('GEMINIAI_MODEL', 'gemini-1.5-flash').strip()
+    preferred_model = os.getenv('GEMINIAI_MODEL', 'gemini-2.5-flash').strip()
     models_to_try = [
         preferred_model,
-        'gemini-1.5-flash',
-        'gemini-2.0-flash',
-        'gemini-2.0-flash-exp',
-        'gemini-1.5-pro',
         'gemini-2.5-flash',
+        'gemini-3.7-flash',
+        'gemini-flash-latest',
+        'gemini-2.5-pro',
+        'gemini-2.0-flash',
+        'gemini-1.5-flash',
     ]
     seen = set()
     models = [m for m in models_to_try if m and not (m in seen or seen.add(m))]

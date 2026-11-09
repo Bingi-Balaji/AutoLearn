@@ -43,6 +43,7 @@ export default function Layout() {
       console.log('Resetting');
     }
     sessionStorage.clear();
+    localStorage.clear();
     navigate('/');
     window.location.reload();
   };

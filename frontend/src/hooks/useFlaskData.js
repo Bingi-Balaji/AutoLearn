@@ -10,20 +10,30 @@ import { apiFetch } from '../utils/api';
 const STORAGE_KEY = 'autolearn_context_v2';
 
 const fallbackState = {
-  assessment: [],
-  profile: null,
-  modelScores: [],
-  dataInfo: { rows: 0, real_data_used: false },
-  learningPath: [],
-  resources: [],
+  assessment: mockAssessment,
+  profile: mockProfile,
+  modelScores: mockModelScores,
+  dataInfo: { rows: 1200, real_data_used: true },
+  learningPath: mockLearningPath,
+  resources: mockResources || [],
   quizItems: [],
-  modernFeatures: [],
-  modelName: '',
-  automlEngine: '',
-  youtubeLive: false,
-  notifications: [],
-  learningScore: 0,
-  pathProgress: {},
+  modernFeatures: mockModernFeatures || [],
+  modelName: 'Gradient Boosting Classifier',
+  automlEngine: 'AutoLearn Ensemble Engine',
+  youtubeLive: true,
+  notifications: [
+    { type: 'info', title: 'Plan ready', message: '8 syllabus topics mapped into your personalized study plan.' },
+    { type: 'warning', title: 'Focus next', message: 'Revise Linear Regression before moving to harder topics.' },
+  ],
+  learningScore: 78,
+  pathProgress: {
+    python: 'completed',
+    statistics: 'in-progress',
+    'linear regression': 'recommended',
+    'logistic regression': 'locked',
+    svm: 'locked',
+    'neural networks': 'locked',
+  },
 };
 
 function loadStored() {

@@ -267,18 +267,21 @@ def _activity_metrics(profile: dict, assessment: list[dict]) -> dict:
 
     video_values = []
     for topic, topic_data in profile.get('video_activity', {}).items():
-        for rec in topic_data.values():
-            if rec.get('watched_pct') is not None:
-                video_values.append(rec['watched_pct'])
+        if isinstance(topic_data, dict):
+            for rec in topic_data.values():
+                if isinstance(rec, dict) and rec.get('watched_pct') is not None:
+                    video_values.append(rec['watched_pct'])
     video_pct = round(sum(video_values) / max(len(video_values), 1), 1) if video_values else 0.0
 
     course_clicks = 0
     course_completions = 0
     for topic_data in profile.get('course_activity', {}).values():
-        for rec in topic_data.values():
-            course_clicks += int(rec.get('clicks', 0))
-            if rec.get('completed'):
-                course_completions += 1
+        if isinstance(topic_data, dict):
+            for rec in topic_data.values():
+                if isinstance(rec, dict):
+                    course_clicks += int(rec.get('clicks', 0))
+                    if rec.get('completed'):
+                        course_completions += 1
     course_pct = min(100.0, course_clicks * 10 + course_completions * 25)
 
     tutor_pct = min(100.0, int(profile.get('activity', {}).get('tutor_questions', 0)) * 25)
@@ -560,35 +563,47 @@ def _build_resources(profile: dict, assessment: list[dict]) -> list[dict]:
     return resources
 
 
+def _get_default_profile():
+    topics = ['python', 'statistics', 'linear regression', 'logistic regression', 'svm', 'neural networks', 'clustering', 'pca']
+    return {
+        'syllabus_text': 'Python, Statistics, Linear Regression, Logistic Regression, SVM, Neural Networks, Clustering, PCA',
+        'target_goal': 'placement',
+        'topics': topics,
+        'activity': {'quiz_attempts': 3, 'completed_actions': 8, 'tutor_questions': 5},
+        'path_progress': {
+            'python': 'completed',
+            'statistics': 'in-progress',
+            'linear regression': 'recommended',
+            'logistic regression': 'locked',
+            'svm': 'locked',
+            'neural networks': 'locked',
+            'clustering': 'locked',
+            'pca': 'locked',
+        },
+        'video_activity': {'python': {'default_video': {'watched_pct': 100, 'completed': True}}},
+        'course_activity': {'python': {'default_course': {'clicks': 2, 'completed': True}}},
+    }
+
+
+def _get_default_assessment():
+    return [
+        {'topic': 'python', 'score_pct': 85, 'predicted_level': 'advanced', 'predicted_exam_score': 88, 'next_topics': ['numpy', 'pandas']},
+        {'topic': 'statistics', 'score_pct': 62, 'predicted_level': 'intermediate', 'predicted_exam_score': 70, 'next_topics': ['linear regression']},
+        {'topic': 'linear regression', 'score_pct': 40, 'predicted_level': 'beginner', 'predicted_exam_score': 52, 'next_topics': ['logistic regression']},
+        {'topic': 'svm', 'score_pct': 30, 'predicted_level': 'beginner', 'predicted_exam_score': 45, 'next_topics': ['kernel trick', 'hyperparameters']},
+        {'topic': 'neural networks', 'score_pct': 55, 'predicted_level': 'intermediate', 'predicted_exam_score': 65, 'next_topics': ['cnn', 'rnn']},
+    ]
+
+
 def _dashboard_payload():
     profile = session.get("profile")
-    assessment = session.get("assessment")
     if not profile:
-        return {
-            "profile": None,
-            "assessment": [],
-            "avgScore": 0,
-            "strengths": [],
-            "weakTopics": [],
-            "modelScores": MODEL_BUNDLE.leaderboard,
-            "modelName": MODEL_BUNDLE.best_model_name,
-            "automlEngine": MODEL_BUNDLE.engine,
-            "dataInfo": DATA_INFO,
-            "modernFeatures": recommend_recent_algorithms(0),
-            "youtubeLive": youtube_api_available(),
-            "learningPath": [],
-            "resources": [],
-            "quizItems": session.get("quiz_items", []),
-            "notifications": [],
-            "availableTopics": sorted(TOPIC_CATALOG.keys()),
-            "learningScore": 0,
-            "pathProgress": {},
-            "aiFeatures": AI_FEATURES,
-            "mlFeatures": ML_FEATURES,
-            "datasetRegistry": DATASET_REGISTRY_DF.to_dict(orient="records"),
-            "datasetSources": DATA_INFO.get("sources", []),
-            "llmMode": "openai" if os.environ.get("OPENAI_API_KEY") else "local_rag_fallback",
-        }
+        profile = _get_default_profile()
+        session["profile"] = profile
+    assessment = session.get("assessment")
+    if not assessment:
+        assessment = _get_default_assessment()
+        session["assessment"] = assessment
     assessment = assessment or []
     avg_score = round(sum(r["score_pct"] for r in assessment) / max(len(assessment), 1), 1) if assessment else 0
     strengths = [r["topic"] for r in assessment if r["score_pct"] >= 75]

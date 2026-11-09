@@ -37,11 +37,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickDemo = () => {
-    setEmail('student@aieducation.io');
-    setPassword('aieducation2026');
-  };
-
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-6">
@@ -139,17 +134,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Credentials helper */}
-          <div className="mt-5 pt-4 border-t border-white/10 text-center">
-            <button
-              type="button"
-              onClick={handleQuickDemo}
-              className="text-[11px] font-mono text-cyan-400 hover:text-cyan-300 transition flex items-center justify-center gap-1.5 mx-auto"
-            >
-              <Sparkles size={13} /> Auto-fill Demo Credentials
-            </button>
-          </div>
         </div>
 
         {/* Footer Link to Signup */}
